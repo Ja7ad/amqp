@@ -1,4 +1,4 @@
-# amqp [![Go Reference](https://pkg.go.dev/badge/github.com/Ja7ad/amqp.svg)](https://pkg.go.dev/github.com/Ja7ad/amqp) [![Go Report Card](https://goreportcard.com/badge/github.com/Ja7ad/amqp)](https://goreportcard.com/report/github.com/Ja7ad/amqp)
+# amqp [![Go Reference](https://pkg.go.dev/badge/github.com/Ja7ad/amqp.svg)](https://pkg.go.dev/github.com/Ja7ad/amqp)
 The AMQP (Advanced Message Queuing Protocol) package in Go is a wrapper for amqp091-go, offering a specific focus on stable and secure connection management. This package provides a high-level interface for interacting with RabbitMQ, emphasizing reliability and safety in connection handling. Key features include automatic reconnection strategies, a simplified API for creating consumers and publishers, and graceful connection closure. By wrapping amqp091-go with stability and safety in mind, this package facilitates robust and secure messaging in Go applications. Explore the documentation to leverage the power of AMQP with confidence in your projects.
 
 ## Goals
