@@ -3,12 +3,15 @@ package amqp
 import (
 	"time"
 
+	"github.com/Ja7ad/amqp/logger"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type rabbitMQOptions struct {
 	ReconnectInterval time.Duration
 	AMQPConfig        amqp.Config
+	Logger            logger.Logger
 }
 
 type RabbitMQOptions func(*rabbitMQOptions)
@@ -17,6 +20,10 @@ func defaultRabbitMQOptions() *rabbitMQOptions {
 	return &rabbitMQOptions{
 		ReconnectInterval: 5 * time.Second,
 		AMQPConfig:        amqp.Config{},
+		Logger: logger.New(logger.CONSOLE_HANDLER, logger.Options{
+			EnableCaller: true,
+			SkipCaller:   3,
+		}),
 	}
 }
 
@@ -29,6 +36,12 @@ func ReconnectDelay(delay time.Duration) RabbitMQOptions {
 func WithCustomAMQPConfig(config amqp.Config) RabbitMQOptions {
 	return func(cfg *rabbitMQOptions) {
 		cfg.AMQPConfig = config
+	}
+}
+
+func WithCustomLogger(logger logger.Logger) RabbitMQOptions {
+	return func(cfg *rabbitMQOptions) {
+		cfg.Logger = logger
 	}
 }
 
