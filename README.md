@@ -1,18 +1,20 @@
 # amqp [![Go Reference](https://pkg.go.dev/badge/github.com/Ja7ad/amqp.svg)](https://pkg.go.dev/github.com/Ja7ad/amqp)
+
 The AMQP (Advanced Message Queuing Protocol) package in Go is a wrapper for amqp091-go, offering a specific focus on stable and secure connection management. This package provides a high-level interface for interacting with RabbitMQ, emphasizing reliability and safety in connection handling. Key features include automatic reconnection strategies, a simplified API for creating consumers and publishers, and graceful connection closure. By wrapping amqp091-go with stability and safety in mind, this package facilitates robust and secure messaging in Go applications. Explore the documentation to leverage the power of AMQP with confidence in your projects.
 
 ## Goals
+
 - **Reliable Reconnection Management:** Develop a robust reconnection mechanism with a specific connection and channel manager running in the background.
-Ensure seamless and automatic re-establishment of connections in case of interruptions or failures.
+  Ensure seamless and automatic re-establishment of connections in case of interruptions or failures.
 
 - **Concurrent Safe Message Consumption:** Implement concurrent-safe methods for consuming messages, allowing multiple consumers to handle messages concurrently without conflicts.
-Ensure thread-safety in message consumption to support high-concurrency scenarios.
+  Ensure thread-safety in message consumption to support high-concurrency scenarios.
 
 - **Custom Publish Method with Retry Support:** Design a custom publish method to provide flexibility in message publishing.
-Incorporate retry support in the publish mechanism to automatically retry failed message deliveries, enhancing message reliability.
+  Incorporate retry support in the publish mechanism to automatically retry failed message deliveries, enhancing message reliability.
 
 - **Consumer with Fault Tolerance:** Develop a fault-tolerant consumer that can gracefully handle errors and exceptions during message processing.
-Implement mechanisms to handle and recover from faults, ensuring continuous and reliable message consumption.
+  Implement mechanisms to handle and recover from faults, ensuring continuous and reliable message consumption.
 
 ## Install
 
