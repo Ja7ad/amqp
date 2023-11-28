@@ -3,6 +3,8 @@ package amqp
 import (
 	"time"
 
+	"github.com/Ja7ad/amqp/types"
+
 	"github.com/Ja7ad/amqp/logger"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -12,6 +14,7 @@ type rabbitMQOptions struct {
 	ReconnectInterval time.Duration
 	AMQPConfig        amqp.Config
 	Logger            logger.Logger
+	EncType           types.EncodeType
 }
 
 type RabbitMQOptions func(*rabbitMQOptions)
@@ -20,6 +23,7 @@ func defaultRabbitMQOptions() *rabbitMQOptions {
 	return &rabbitMQOptions{
 		ReconnectInterval: 5 * time.Second,
 		AMQPConfig:        amqp.Config{},
+		EncType:           types.JSON,
 		Logger: logger.New(logger.CONSOLE_HANDLER, logger.Options{
 			EnableCaller: true,
 			SkipCaller:   3,
@@ -42,6 +46,15 @@ func WithCustomAMQPConfig(config amqp.Config) RabbitMQOptions {
 func WithCustomLogger(logger logger.Logger) RabbitMQOptions {
 	return func(cfg *rabbitMQOptions) {
 		cfg.Logger = logger
+	}
+}
+
+// WithCustomEncoder change default encoder to another encoder (JSON, GOB, ProtoBuf)
+//
+// Note: if you change default encoder form publisher or consumer, both match encoder (encode and decode)
+func WithCustomEncoder(encType types.EncodeType) RabbitMQOptions {
+	return func(o *rabbitMQOptions) {
+		o.EncType = encType
 	}
 }
 

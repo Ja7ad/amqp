@@ -32,7 +32,14 @@ import (
 	"log"
 )
 
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
 func main() {
+	done := make(chan struct{})
+
 	b, err := amqp.New("uri")
 	if err != nil {
 		log.Fatal(err)
@@ -78,24 +85,27 @@ func main() {
 				Declare: false,
 			},
 		},
-		handler(print),
+		handler,
 		amqp.WithConcurrentConsumer(10),
 	)
 
 	if err := con.Start(); err != nil {
 		log.Fatal(err)
 	}
+
+	<-done
 }
 
-func handler(print func(msg []byte)) types.ConsumerHandler {
-	return func(d types.Delivery) (action types.Action) {
-		print(d.Body)
-		return types.Ack
+func handler(f func(vPtr any) (types.Delivery, error)) types.Action {
+	person := new(Person)
+	msg, err := f(person)
+	if err != nil {
+		fmt.Println(err)
+		return types.NackDiscard
 	}
-}
 
-func print(msg []byte) {
-	fmt.Println(string(msg))
+	fmt.Printf("routingKey: %s, msg: %v", msg.RoutingKey, person)
+	return types.Ack
 }
 ```
 
@@ -111,6 +121,11 @@ import (
 	"log"
 	"time"
 )
+
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
 
 func main() {
 	rb, err := amqp.New("uri")
@@ -133,19 +148,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	i := 0
-	for {
-		if err := pub.Publish(false, false, types.Publishing{
-			DeliveryMode: types.Persistent,
-			Body:         []byte(fmt.Sprintf("msg %d", i)),
-		}, "foo"); err != nil {
-			log.Fatal(err)
-		}
+	person := &Person{
+		Name: "javad",
+		Age:  30,
+	}
 
-		fmt.Printf("message %d publised\n", i)
-
-		i++
-		time.Sleep(5 * time.Second)
+	if err := pub.Publish(false, false, types.Publishing{
+		DeliveryMode: types.Persistent,
+		Body:         person,
+	}, "foo"); err != nil {
+		log.Fatal(err)
 	}
 }
 ```

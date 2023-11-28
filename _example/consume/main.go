@@ -8,6 +8,11 @@ import (
 	"github.com/Ja7ad/amqp/types"
 )
 
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
 func main() {
 	done := make(chan struct{})
 
@@ -56,7 +61,7 @@ func main() {
 				Declare: false,
 			},
 		},
-		handler(print),
+		handler,
 		amqp.WithConcurrentConsumer(10),
 	)
 
@@ -67,13 +72,14 @@ func main() {
 	<-done
 }
 
-func handler(print func(msg []byte)) types.ConsumerHandler {
-	return func(d types.Delivery) (action types.Action) {
-		print(d.Body)
-		return types.Ack
+func handler(f func(vPtr any) (types.Delivery, error)) types.Action {
+	person := new(Person)
+	msg, err := f(person)
+	if err != nil {
+		fmt.Println(err)
+		return types.NackDiscard
 	}
-}
 
-func print(msg []byte) {
-	fmt.Println(string(msg))
+	fmt.Printf("routingKey: %s, msg: %v", msg.RoutingKey, person)
+	return types.Ack
 }

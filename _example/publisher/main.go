@@ -1,13 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/Ja7ad/amqp"
 	"github.com/Ja7ad/amqp/types"
 )
+
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
 
 func main() {
 	rb, err := amqp.New("uri")
@@ -30,18 +33,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	i := 0
-	for {
-		if err := pub.Publish(false, false, types.Publishing{
-			DeliveryMode: types.Persistent,
-			Body:         []byte(fmt.Sprintf("msg %d", i)),
-		}, "foo"); err != nil {
-			log.Fatal(err)
-		}
+	person := &Person{
+		Name: "javad",
+		Age:  30,
+	}
 
-		fmt.Printf("message %d publised\n", i)
-
-		i++
-		time.Sleep(5 * time.Second)
+	if err := pub.Publish(false, false, types.Publishing{
+		DeliveryMode: types.Persistent,
+		Body:         person,
+	}, "foo"); err != nil {
+		log.Fatal(err)
 	}
 }

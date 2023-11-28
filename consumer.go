@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/Ja7ad/amqp/errs"
+
 	"github.com/Ja7ad/amqp/logger"
 	"github.com/Ja7ad/amqp/types"
 	rabbit "github.com/rabbitmq/amqp091-go"
@@ -25,6 +27,7 @@ type consumer struct {
 	consumer    *types.Consumer
 	routingKeys []*types.RoutingKey
 	handler     types.ConsumerHandler
+	enc         types.Encoder
 }
 
 type Consumer interface {
@@ -48,19 +51,19 @@ func (r *AMQP) Consumer(
 	}
 
 	if exchange == nil {
-		return nil, ErrExchangeIsNil
+		return nil, errs.ErrExchangeIsNil
 	}
 
 	if queue == nil {
-		return nil, ErrQueueIsNil
+		return nil, errs.ErrQueueIsNil
 	}
 
 	if consume == nil {
-		return nil, ErrConsumerIsNil
+		return nil, errs.ErrConsumerIsNil
 	}
 
 	if routingKeys == nil {
-		return nil, ErrRoutingKeyIsNil
+		return nil, errs.ErrRoutingKeyIsNil
 	}
 
 	chanMgr, err := newChannelMgr(r.connMgr, r.logger, r.reconnectInterval)
@@ -83,6 +86,7 @@ func (r *AMQP) Consumer(
 		consumer:                   consume,
 		routingKeys:                routingKeys,
 		handler:                    messageHandler,
+		enc:                        r.enc,
 	}
 
 	go func() {
@@ -175,11 +179,15 @@ func handleMsg(id int, name string, consumer *consumer, msgs <-chan rabbit.Deliv
 		}
 
 		if consumer.consumer.AutoAck {
-			handler(types.Delivery{Delivery: msg})
+			handler(func(vPtr any) (types.Delivery, error) {
+				return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
+			})
 			continue
 		}
 
-		switch handler(types.Delivery{Delivery: msg}) {
+		switch handler(func(vPtr any) (types.Delivery, error) {
+			return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
+		}) {
 		case types.Ack:
 			err := msg.Ack(false)
 			if err != nil {
