@@ -79,7 +79,9 @@ const (
 )
 
 // ConsumerHandler defines the handler of each Delivery and return Action
-type ConsumerHandler func(d Delivery) (action Action)
+//
+// vPtr you variable for decode body
+type ConsumerHandler func(func(vPtr any) (Delivery, error)) (action Action)
 
 const (
 	// Ack default ack this msg after you have successfully processed this delivery.
@@ -171,10 +173,23 @@ type Publishing struct {
 	AppId           string      // creating application id
 
 	// The application specific payload of the message
-	Body []byte
+	Body any
 }
 
 type PublisherConfig struct {
 	RetryDelay time.Duration
 	MaxRetries int
+}
+
+type EncodeType uint8
+
+const (
+	JSON = iota
+	GOB
+	PROTO
+)
+
+type Encoder interface {
+	Encode(v any) ([]byte, error)
+	Decode(data []byte, vPtr any) error
 }

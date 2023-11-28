@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Ja7ad/amqp/errs"
+
 	"github.com/Ja7ad/amqp/logger"
 	"github.com/Ja7ad/amqp/types"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -34,6 +36,7 @@ type publisher struct {
 
 	logger   logger.Logger
 	exchange *types.Exchange
+	enc      types.Encoder
 }
 
 type Publisher interface {
@@ -192,7 +195,7 @@ type Publisher interface {
 // Publisher create publisher interface for publishing message
 func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool) (Publisher, error) {
 	if exchange == nil {
-		return nil, ErrExchangeIsNil
+		return nil, errs.ErrExchangeIsNil
 	}
 
 	chanManager, err := newChannelMgr(r.connMgr, r.logger, r.reconnectInterval)
@@ -215,6 +218,7 @@ func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool) (Publisher,
 		notifyPublishHandler:          nil,
 		exchange:                      exchange,
 		logger:                        r.logger,
+		enc:                           r.enc,
 	}
 
 	err = pub.startup()
@@ -309,7 +313,12 @@ func (r *publisher) PublishWithContext(
 	}
 
 	if routingKeys == nil {
-		return ErrRoutingKeyIsNil
+		return errs.ErrRoutingKeyIsNil
+	}
+
+	body, err := r.enc.Encode(msg.Body)
+	if err != nil {
+		return errs.ErrFailedEncode
 	}
 
 	for _, routingKey := range routingKeys {
@@ -334,7 +343,7 @@ func (r *publisher) PublishWithContext(
 				Type:            msg.Type,
 				UserId:          msg.UserId,
 				AppId:           msg.AppId,
-				Body:            msg.Body,
+				Body:            body,
 			},
 		)
 		if err != nil {
@@ -365,6 +374,11 @@ func (r *publisher) PublishWithDeferredConfirmWithContext(
 
 	var deferredConfirmations []*amqp.DeferredConfirmation
 
+	body, err := r.enc.Encode(msg.Body)
+	if err != nil {
+		return types.PublisherConfirmation{}, errs.ErrFailedEncode
+	}
+
 	for _, routingKey := range routingKeys {
 		// Actual publish.
 		conf, err := r.chanManager.publishWithDeferredConfirmWithContextSafe(
@@ -387,7 +401,7 @@ func (r *publisher) PublishWithDeferredConfirmWithContext(
 				Type:            msg.Type,
 				UserId:          msg.UserId,
 				AppId:           msg.AppId,
-				Body:            msg.Body,
+				Body:            body,
 			},
 		)
 		if err != nil {

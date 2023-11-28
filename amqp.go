@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Ja7ad/amqp/encoder"
+
 	"github.com/Ja7ad/amqp/logger"
 	"github.com/Ja7ad/amqp/types"
 )
@@ -14,6 +16,7 @@ type AMQP struct {
 	closeConnectionToManagerCh chan<- struct{}
 	logger                     logger.Logger
 	reconnectInterval          time.Duration
+	enc                        types.Encoder
 }
 
 type Broker interface {
@@ -42,6 +45,15 @@ func New(url string, options ...RabbitMQOptions) (Broker, error) {
 	rabbit := &AMQP{
 		reconnectInterval: defaultOpt.ReconnectInterval,
 		logger:            defaultOpt.Logger,
+	}
+
+	switch defaultOpt.EncType {
+	case types.JSON:
+		rabbit.enc = new(encoder.JsonEncoder)
+	case types.GOB:
+		rabbit.enc = new(encoder.GobEncoder)
+	case types.PROTO:
+		rabbit.enc = new(encoder.ProtoBufEncoder)
 	}
 
 	connMgr, err := newConnMgr(url, defaultOpt.AMQPConfig, defaultOpt.Logger, defaultOpt.ReconnectInterval)
