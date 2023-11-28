@@ -10,8 +10,7 @@ import (
 )
 
 type dispatcher struct {
-	subscribers map[int]subscriber
-	mu          *sync.Mutex
+	subscribers sync.Map
 	logger      logger.Logger
 }
 
@@ -22,23 +21,21 @@ type subscriber struct {
 
 func newDispatcher(logger logger.Logger) *dispatcher {
 	return &dispatcher{
-		subscribers: make(map[int]subscriber),
-		mu:          new(sync.Mutex),
+		subscribers: sync.Map{},
 		logger:      logger,
 	}
 }
 
 func (d *dispatcher) dispatch(err error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	for _, s := range d.subscribers {
+	d.subscribers.Range(func(_, value interface{}) bool {
+		s := value.(subscriber)
 		select {
 		case <-time.After(5 * time.Second):
 			d.logger.Error("Unexpected rabbitmq error: timeout in dispatcher")
 		case s.notifyCancelOrCloseChan <- err:
 		}
-	}
+		return true
+	})
 }
 
 func (d *dispatcher) addSubscriber() (<-chan error, chan<- struct{}) {
@@ -49,24 +46,18 @@ func (d *dispatcher) addSubscriber() (<-chan error, chan<- struct{}) {
 	closeCh := make(chan struct{})
 	notifyCancelOrCloseChan := make(chan error)
 
-	d.mu.Lock()
-	d.subscribers[id] = subscriber{
+	sub := subscriber{
 		notifyCancelOrCloseChan: notifyCancelOrCloseChan,
 		closeCh:                 closeCh,
 	}
-	d.mu.Unlock()
+
+	d.subscribers.Store(id, sub)
 
 	go func(id int) {
 		<-closeCh
-		d.mu.Lock()
-		defer d.mu.Unlock()
-
-		sub, ok := d.subscribers[id]
-		if !ok {
-			return
-		}
-		close(sub.notifyCancelOrCloseChan)
-		delete(d.subscribers, id)
+		d.subscribers.Delete(id)
+		close(notifyCancelOrCloseChan)
 	}(id)
+
 	return notifyCancelOrCloseChan, closeCh
 }
