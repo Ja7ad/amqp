@@ -1,0 +1,3 @@
+check:
+	gofumpt -l -w .
+	govulncheck ./...
