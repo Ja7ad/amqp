@@ -12,6 +12,15 @@ type Person struct {
 	Age  int    `json:"age"`
 }
 
+type Greeting struct {
+	Msg string `json:"msg"`
+}
+
+const (
+	routingKeyPerson   = "person"
+	routingKeyGreeting = "greeting"
+)
+
 func main() {
 	rb, err := amqp.New("uri")
 	if err != nil {
@@ -41,7 +50,18 @@ func main() {
 	if err := pub.Publish(false, false, types.Publishing{
 		DeliveryMode: types.Persistent,
 		Body:         person,
-	}, "foo"); err != nil {
+	}, routingKeyPerson); err != nil {
+		log.Fatal(err)
+	}
+
+	greeting := &Greeting{
+		Msg: "foobar",
+	}
+
+	if err := pub.Publish(false, false, types.Publishing{
+		DeliveryMode: types.Persistent,
+		Body:         greeting,
+	}, routingKeyGreeting); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -179,13 +179,13 @@ func handleMsg(id int, name string, consumer *consumer, msgs <-chan rabbit.Deliv
 		}
 
 		if consumer.consumer.AutoAck {
-			handler(func(vPtr any) (types.Delivery, error) {
+			handler(msg.RoutingKey, func(vPtr any) (types.Delivery, error) {
 				return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
 			})
 			continue
 		}
 
-		switch handler(func(vPtr any) (types.Delivery, error) {
+		switch handler(msg.RoutingKey, func(vPtr any) (types.Delivery, error) {
 			return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
 		}) {
 		case types.Ack:

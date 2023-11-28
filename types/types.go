@@ -81,7 +81,7 @@ const (
 // ConsumerHandler defines the handler of each Delivery and return Action
 //
 // vPtr you variable for decode body
-type ConsumerHandler func(func(vPtr any) (Delivery, error)) (action Action)
+type ConsumerHandler func(routingKey string, msgFunc func(vPtr any) (Delivery, error)) (action Action)
 
 const (
 	// Ack default ack this msg after you have successfully processed this delivery.

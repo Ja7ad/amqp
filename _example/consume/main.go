@@ -13,6 +13,15 @@ type Person struct {
 	Age  int    `json:"age"`
 }
 
+type Greeting struct {
+	Msg string `json:"msg"`
+}
+
+const (
+	routingKeyPerson   = "person"
+	routingKeyGreeting = "greeting"
+)
+
 func main() {
 	done := make(chan struct{})
 
@@ -53,12 +62,12 @@ func main() {
 		},
 		[]*types.RoutingKey{
 			{
-				Key:     "foo",
+				Key:     "greeting",
 				Declare: true,
 			},
 			{
-				Key:     "bar",
-				Declare: false,
+				Key:     "person",
+				Declare: true,
 			},
 		},
 		handler,
@@ -72,14 +81,30 @@ func main() {
 	<-done
 }
 
-func handler(f func(vPtr any) (types.Delivery, error)) types.Action {
-	person := new(Person)
-	msg, err := f(person)
-	if err != nil {
-		fmt.Println(err)
-		return types.NackDiscard
+func handler(routingKey string, msgFunc func(vPtr any) (types.Delivery, error)) types.Action {
+	switch routingKey {
+	case routingKeyPerson:
+		person := new(Person)
+		msg, err := msgFunc(person)
+		if err != nil {
+			fmt.Println(err)
+			return types.NackDiscard
+		}
+
+		fmt.Printf("routingKey: %s, msg: %v\n", msg.RoutingKey, person)
+		return types.Ack
+	case routingKeyGreeting:
+		greeting := new(Greeting)
+		msg, err := msgFunc(greeting)
+		if err != nil {
+			fmt.Println(err)
+			return types.NackDiscard
+		}
+
+		fmt.Printf("routingKey: %s, msg: %v\n", msg.RoutingKey, greeting)
+		return types.Ack
+	default:
+		return types.Reject
 	}
 
-	fmt.Printf("routingKey: %s, msg: %v", msg.RoutingKey, person)
-	return types.Ack
 }
