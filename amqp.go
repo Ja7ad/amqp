@@ -26,32 +26,34 @@ type Broker interface {
 		options ...ConsumerOptions) (Consumer, error)
 
 	// Publisher create a publisher instance
-	Publisher(exchange *types.Exchange, logger logger.Logger, confirmMode bool) (Publisher, error)
+	Publisher(exchange *types.Exchange, confirmMode bool) (Publisher, error)
 
 	// Close rabbitmq connection
 	Close() error
 }
 
 // New create amqp object for consume and publish
-func New(url string, logger logger.Logger, options ...RabbitMQOptions) (Broker, error) {
+func New(url string, options ...RabbitMQOptions) (Broker, error) {
 	defaultOpt := defaultRabbitMQOptions()
 	for _, opt := range options {
 		opt(defaultOpt)
 	}
 
-	connMgr, err := newConnMgr(url, defaultOpt.AMQPConfig, logger, defaultOpt.ReconnectInterval)
+	rabbit := &AMQP{
+		reconnectInterval: defaultOpt.ReconnectInterval,
+		logger:            defaultOpt.Logger,
+	}
+
+	connMgr, err := newConnMgr(url, defaultOpt.AMQPConfig, defaultOpt.Logger, defaultOpt.ReconnectInterval)
 	if err != nil {
 		return nil, err
 	}
 
 	reconnectCh, closeCh := connMgr.notifyReconnect()
-	rabbit := &AMQP{
-		connMgr:                    connMgr,
-		reconnectErrCh:             reconnectCh,
-		closeConnectionToManagerCh: closeCh,
-		logger:                     logger,
-		reconnectInterval:          defaultOpt.ReconnectInterval,
-	}
+	rabbit.connMgr = connMgr
+	rabbit.reconnectErrCh = reconnectCh
+	rabbit.closeConnectionToManagerCh = closeCh
+	rabbit.logger = defaultOpt.Logger
 
 	go rabbit.handleRestarts()
 	return rabbit, nil

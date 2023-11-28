@@ -28,24 +28,12 @@ package main
 import (
 	"fmt"
 	"github.com/Ja7ad/amqp"
-	"github.com/Ja7ad/amqp/logger"
 	"github.com/Ja7ad/amqp/types"
 	"log"
 )
 
 func main() {
-	done := make(chan struct{})
-	lg, err := logger.New(logger.CONSOLE_HANDLER, logger.Options{
-		Development:  true,
-		Debug:        false,
-		EnableCaller: true,
-		SkipCaller:   3,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	b, err := amqp.New("uri", lg)
+	b, err := amqp.New("uri")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,8 +85,6 @@ func main() {
 	if err := con.Start(); err != nil {
 		log.Fatal(err)
 	}
-
-	<-done
 }
 
 func handler(print func(msg []byte)) types.ConsumerHandler {
@@ -121,24 +107,13 @@ package main
 import (
 	"fmt"
 	"github.com/Ja7ad/amqp"
-	"github.com/Ja7ad/amqp/logger"
 	"github.com/Ja7ad/amqp/types"
 	"log"
 	"time"
 )
 
 func main() {
-	lg, err := logger.New(logger.CONSOLE_HANDLER, logger.Options{
-		Development:  true,
-		Debug:        false,
-		EnableCaller: true,
-		SkipCaller:   3,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	rb, err := amqp.New("uri", lg)
+	rb, err := amqp.New("uri")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,7 +128,7 @@ func main() {
 		Internal:   false,
 		NoWait:     false,
 		Arguments:  nil,
-	}, lg, false)
+	}, false)
 	if err != nil {
 		log.Fatal(err)
 	}

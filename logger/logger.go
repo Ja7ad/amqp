@@ -49,7 +49,7 @@ type Logger interface {
 func New(
 	handler HandleType,
 	loggerOption Options,
-) (Logger, error) {
+) Logger {
 	log := new(Log)
 	logger := slog.Default()
 	slogHandlerOpt := new(slog.HandlerOptions)
@@ -87,7 +87,7 @@ func New(
 	log.slog = logger
 	log.skipCaller = loggerOption.SkipCaller
 
-	return log, nil
+	return log
 }
 
 func (l *Log) Debug(msg string, keyValues ...any) {

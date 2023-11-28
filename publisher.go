@@ -190,12 +190,12 @@ type Publisher interface {
 }
 
 // Publisher create publisher interface for publishing message
-func (r *AMQP) Publisher(exchange *types.Exchange, logger logger.Logger, confirmMode bool) (Publisher, error) {
+func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool) (Publisher, error) {
 	if exchange == nil {
 		return nil, ErrExchangeIsNil
 	}
 
-	chanManager, err := newChannelMgr(r.connMgr, logger, r.reconnectInterval)
+	chanManager, err := newChannelMgr(r.connMgr, r.logger, r.reconnectInterval)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (r *AMQP) Publisher(exchange *types.Exchange, logger logger.Logger, confirm
 		notifyReturnHandler:           nil,
 		notifyPublishHandler:          nil,
 		exchange:                      exchange,
-		logger:                        logger,
+		logger:                        r.logger,
 	}
 
 	err = pub.startup()
