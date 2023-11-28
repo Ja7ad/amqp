@@ -106,5 +106,4 @@ func handler(routingKey string, msgFunc func(vPtr any) (types.Delivery, error)) 
 	default:
 		return types.Reject
 	}
-
 }
