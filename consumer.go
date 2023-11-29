@@ -178,15 +178,38 @@ func handleMsg(id int, name string, consumer *consumer, msgs <-chan rabbit.Deliv
 			break
 		}
 
+		delivery := types.Delivery{
+			Headers:         msg.Headers,
+			ContentType:     msg.ContentType,
+			ContentEncoding: msg.ContentEncoding,
+			DeliveryMode:    msg.DeliveryMode,
+			Priority:        msg.Priority,
+			CorrelationId:   msg.CorrelationId,
+			ReplyTo:         msg.ReplyTo,
+			Expiration:      msg.Expiration,
+			MessageId:       msg.MessageId,
+			Timestamp:       msg.Timestamp,
+			Type:            msg.Type,
+			UserId:          msg.UserId,
+			AppId:           msg.AppId,
+			ConsumerTag:     msg.ConsumerTag,
+			MessageCount:    msg.MessageCount,
+			DeliveryTag:     msg.DeliveryTag,
+			Redelivered:     msg.Redelivered,
+			Exchange:        msg.Exchange,
+			RoutingKey:      msg.RoutingKey,
+			Body:            msg.Body,
+		}
+
 		if consumer.consumer.AutoAck {
 			handler(msg.RoutingKey, func(vPtr any) (types.Delivery, error) {
-				return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
+				return delivery, consumer.enc.Decode(msg.Body, vPtr)
 			})
 			continue
 		}
 
 		switch handler(msg.RoutingKey, func(vPtr any) (types.Delivery, error) {
-			return types.Delivery{Delivery: msg}, consumer.enc.Decode(msg.Body, vPtr)
+			return delivery, consumer.enc.Decode(msg.Body, vPtr)
 		}) {
 		case types.Ack:
 			err := msg.Ack(false)

@@ -70,7 +70,26 @@ func (k ExchangeKind) String() string {
 type Action uint8
 
 type Delivery struct {
-	rabbit.Delivery
+	Headers         rabbit.Table
+	ContentType     string
+	ContentEncoding string
+	DeliveryMode    uint8
+	Priority        uint8
+	CorrelationId   string
+	ReplyTo         string
+	Expiration      string
+	MessageId       string
+	Timestamp       time.Time
+	Type            string
+	UserId          string
+	AppId           string
+	ConsumerTag     string
+	MessageCount    uint32
+	DeliveryTag     uint64
+	Redelivered     bool
+	Exchange        string
+	RoutingKey      string
+	Body            []byte
 }
 
 const (
