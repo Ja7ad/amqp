@@ -37,7 +37,7 @@ func main() {
 		Internal:   false,
 		NoWait:     false,
 		Arguments:  nil,
-	}, false)
+	}, false, amqp.WithAutoMessageID(), amqp.WithAutoTimestamp())
 	if err != nil {
 		log.Fatal(err)
 	}

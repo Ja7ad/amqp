@@ -3,6 +3,7 @@ package amqp
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"sync"
 	"time"
 
@@ -37,6 +38,8 @@ type publisher struct {
 	logger   logger.Logger
 	exchange *types.Exchange
 	enc      types.Encoder
+
+	options *publisherOptions
 }
 
 type Publisher interface {
@@ -193,9 +196,14 @@ type Publisher interface {
 }
 
 // Publisher create publisher interface for publishing message
-func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool) (Publisher, error) {
+func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool, options ...PublisherOption) (Publisher, error) {
 	if exchange == nil {
 		return nil, errs.ErrExchangeIsNil
+	}
+
+	defaultOpts := defaultPublisherOption()
+	for _, opt := range options {
+		opt(defaultOpts)
 	}
 
 	chanManager, err := newChannelMgr(r.connMgr, r.logger, r.reconnectInterval)
@@ -219,6 +227,7 @@ func (r *AMQP) Publisher(exchange *types.Exchange, confirmMode bool) (Publisher,
 		exchange:                      exchange,
 		logger:                        r.logger,
 		enc:                           r.enc,
+		options:                       defaultOpts,
 	}
 
 	err = pub.startup()
@@ -322,6 +331,31 @@ func (r *publisher) PublishWithContext(
 	}
 
 	for _, routingKey := range routingKeys {
+		pub := amqp.Publishing{
+			Headers:         msg.Headers,
+			ContentType:     msg.ContentType,
+			ContentEncoding: msg.ContentEncoding,
+			DeliveryMode:    uint8(msg.DeliveryMode),
+			Priority:        msg.Priority,
+			CorrelationId:   msg.CorrelationId,
+			ReplyTo:         msg.ReplyTo,
+			Expiration:      msg.Expiration,
+			MessageId:       msg.MessageId,
+			Timestamp:       msg.Timestamp,
+			Type:            msg.Type,
+			UserId:          msg.UserId,
+			AppId:           msg.AppId,
+			Body:            body,
+		}
+
+		if r.options.AutoMessageID {
+			pub.MessageId = uuid.New().String()
+		}
+
+		if r.options.AutoTimeStamp {
+			pub.Timestamp = time.Now()
+		}
+
 		// Actual publish.
 		err := r.chanManager.publishWithContextSafe(
 			ctx,
@@ -329,22 +363,7 @@ func (r *publisher) PublishWithContext(
 			routingKey,
 			mandatory,
 			immediate,
-			amqp.Publishing{
-				Headers:         msg.Headers,
-				ContentType:     msg.ContentType,
-				ContentEncoding: msg.ContentEncoding,
-				DeliveryMode:    uint8(msg.DeliveryMode),
-				Priority:        msg.Priority,
-				CorrelationId:   msg.CorrelationId,
-				ReplyTo:         msg.ReplyTo,
-				Expiration:      msg.Expiration,
-				MessageId:       msg.MessageId,
-				Timestamp:       msg.Timestamp,
-				Type:            msg.Type,
-				UserId:          msg.UserId,
-				AppId:           msg.AppId,
-				Body:            body,
-			},
+			pub,
 		)
 		if err != nil {
 			return err
@@ -380,6 +399,31 @@ func (r *publisher) PublishWithDeferredConfirmWithContext(
 	}
 
 	for _, routingKey := range routingKeys {
+		pub := amqp.Publishing{
+			Headers:         msg.Headers,
+			ContentType:     msg.ContentType,
+			ContentEncoding: msg.ContentEncoding,
+			DeliveryMode:    uint8(msg.DeliveryMode),
+			Priority:        msg.Priority,
+			CorrelationId:   msg.CorrelationId,
+			ReplyTo:         msg.ReplyTo,
+			Expiration:      msg.Expiration,
+			MessageId:       msg.MessageId,
+			Timestamp:       msg.Timestamp,
+			Type:            msg.Type,
+			UserId:          msg.UserId,
+			AppId:           msg.AppId,
+			Body:            body,
+		}
+
+		if r.options.AutoMessageID {
+			pub.MessageId = uuid.New().String()
+		}
+
+		if r.options.AutoTimeStamp {
+			pub.Timestamp = time.Now()
+		}
+
 		// Actual publish.
 		conf, err := r.chanManager.publishWithDeferredConfirmWithContextSafe(
 			ctx,
@@ -387,22 +431,7 @@ func (r *publisher) PublishWithDeferredConfirmWithContext(
 			routingKey,
 			mandatory,
 			immediate,
-			amqp.Publishing{
-				Headers:         msg.Headers,
-				ContentType:     msg.ContentType,
-				ContentEncoding: msg.ContentEncoding,
-				DeliveryMode:    uint8(msg.DeliveryMode),
-				Priority:        msg.Priority,
-				CorrelationId:   msg.CorrelationId,
-				ReplyTo:         msg.ReplyTo,
-				Expiration:      msg.Expiration,
-				MessageId:       msg.MessageId,
-				Timestamp:       msg.Timestamp,
-				Type:            msg.Type,
-				UserId:          msg.UserId,
-				AppId:           msg.AppId,
-				Body:            body,
-			},
+			pub,
 		)
 		if err != nil {
 			return nil, err

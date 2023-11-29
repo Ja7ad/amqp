@@ -98,3 +98,31 @@ func EnableQOSGlobal(enable bool) ConsumerOptions {
 		opt.QOSGlobal = enable
 	}
 }
+
+type publisherOptions struct {
+	AutoMessageID bool
+	AutoTimeStamp bool
+}
+
+type PublisherOption func(options *publisherOptions)
+
+func defaultPublisherOption() *publisherOptions {
+	return &publisherOptions{
+		AutoTimeStamp: false,
+		AutoMessageID: false,
+	}
+}
+
+// WithAutoMessageID set uuid for message on publishing
+func WithAutoMessageID() PublisherOption {
+	return func(opt *publisherOptions) {
+		opt.AutoMessageID = true
+	}
+}
+
+// WithAutoTimestamp set timestamp in message on publishing
+func WithAutoTimestamp() PublisherOption {
+	return func(opt *publisherOptions) {
+		opt.AutoTimeStamp = true
+	}
+}

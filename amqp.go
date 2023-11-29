@@ -29,7 +29,7 @@ type Broker interface {
 		options ...ConsumerOptions) (Consumer, error)
 
 	// Publisher create a publisher instance
-	Publisher(exchange *types.Exchange, confirmMode bool) (Publisher, error)
+	Publisher(exchange *types.Exchange, confirmMode bool, options ...PublisherOption) (Publisher, error)
 
 	// Close rabbitmq connection
 	Close() error
