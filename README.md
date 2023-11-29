@@ -14,7 +14,7 @@ Incorporate retry support in the publish mechanism to automatically retry failed
 - **Consumer with Fault Tolerance:** Develop a fault-tolerant consumer that can gracefully handle errors and exceptions during message processing.
 Implement mechanisms to handle and recover from faults, ensuring continuous and reliable message consumption.
 
-- **Auto Encoder (JSON, GOB, ProtoBuf)**: auto encode your message body with any type on publish then on consume auto decode message body on your variable
+- **Auto Encoder (JSON, GOB, ProtoBuf)**: Automatically encode your message body with any type upon publishing. Then, upon consumption, automatically decode the message body into your variable."
 
 ## Install
 
